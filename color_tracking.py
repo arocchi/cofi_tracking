@@ -4,9 +4,14 @@ __author__ = 'Alessio Rocchi'
 
 import cv2
 import time
+import numpy as np
 import cofi.generators.color_generator as cg
 import cofi.trackers.color_tracker as ct
 import argparse
+
+
+# can go from 0 (hard colors) to 1 (soft colors)
+COLOR_MARGIN = 0.52
 
 NUM_COLORS = 12
 ok = True
@@ -37,7 +42,7 @@ if __name__ == "__main__":
 
     for color in colors:
         h,_,_ = color
-        threshold = 0.9*(360.0/NUM_COLORS)
+        threshold = COLOR_MARGIN*(360.0/NUM_COLORS)
 
         h_min = 2*h - threshold/2
         if h_min < 0:
@@ -66,8 +71,11 @@ if __name__ == "__main__":
 
         centers = ct.detect_hues(frame, hue_filters)
         for center in centers:
-            cx, cy = center
-            cv2.circle(frame, (cx, cy), 7, (0, 0, 0), -1)
+            cx, cy, h = center
+            bgr = cv2.cvtColor(np.array([[[h,255,255]]],np.uint8),cv2.COLOR_HSV2BGR)
+            bgr = tuple(bgr.tolist()[0][0])
+            cv2.circle(frame, (cx, cy), 7, (0, 0, 0), 2)
+            cv2.circle(frame, (cx, cy), 7,  bgr,     -1)
 
         # Show it, if key pressed is 'Esc', exit the loop
         cv2.imshow('frame',frame)
