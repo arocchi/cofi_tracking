@@ -13,12 +13,22 @@ ok = True
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('img_name', nargs='?', default='')
+    parser.add_argument('img_name', nargs='?', default='', help="a local image file, or a number representing a camera id")
+    parser.add_argument("--realsense", help="use the Realsense",action='store_true')
     args = parser.parse_args()
 
     img_mode = False
+    camera_index = 0
+
+    if args.realsense:
+        print 'Realsense mode is WIP'
+        exit()
+
     if args.img_name != '':
-        img_mode = True
+        try:
+            camera_index = int(args.img_name)
+        except:
+            img_mode = True
 
 
     colors = cg.get_hsv_equispaced_hues(NUM_COLORS)
@@ -42,7 +52,7 @@ if __name__ == "__main__":
         hue_filters.append((h_min , h_max, h))
 
     if not img_mode:
-        cap = cv2.VideoCapture(0)
+        cap = cv2.VideoCapture(camera_index)
 
     while(ok):
 
