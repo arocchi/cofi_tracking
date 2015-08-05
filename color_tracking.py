@@ -23,15 +23,24 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     img_mode = False
+    opencv_mode = False
+    realsense_mode = False
     camera_index = 0
 
+    realsense_grabber = None    # RealSense grabber
+    cap = None                  # OpenCV grabber
+
     if args.realsense:
-        print 'Realsense mode is WIP'
-        exit()
+        import RealSense.best_fast_grabber as gr
+        realsense_mode = True
+        realsense_grabber = gr.best_fast_grabber()
 
     if args.img_name != '':
         try:
             camera_index = int(args.img_name)
+            opencv_mode = True
+            cap = cv2.VideoCapture(camera_index)
+
         except:
             img_mode = True
 
@@ -56,12 +65,12 @@ if __name__ == "__main__":
 
         hue_filters.append((h_min , h_max, h))
 
-    if not img_mode:
-        cap = cv2.VideoCapture(camera_index)
-
     while(ok):
 
-        if(img_mode):
+        if(realsense_mode):
+            (color_image, cloud, depth_uv, inverse_uv) = realsense_grabber.grab()
+            frame = color_image.copy()
+        elif(img_mode):
             frame = cv2.imread(args.img_name)
         else:
             # read the frames

@@ -32,7 +32,7 @@ class best_fast_grabber(object):
         self.mark = 0.0
         self.n = 0
 
-        self.show_ui = False
+        self.show_ui = show
 
         pass
 
@@ -118,8 +118,12 @@ class best_fast_grabber(object):
             self.camera.close()
         self.camera = None
 
-    def grab(self, show=True):
-        if show:
+    def grab(self, show=None):
+        """
+        Grabs from the configured RealSense Camera
+        :return: a tuple (color_image, cloud, depth_uv, inverse_uv)
+        """
+        if self.show_ui or (show is not None and show is True):
             from RealSenseLib.ui.numpy_widget import NumpyWidget
             import matplotlib.cm
             from PySide.QtGui import QApplication
