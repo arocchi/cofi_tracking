@@ -172,6 +172,24 @@ class best_fast_grabber(object):
         inverse_uv = numpy.frombuffer(color_uv_buffer, dtype=numpy.float32).reshape((color_buffer.height, color_buffer.width, 2))
 
         ##############
+        # Based on __init__.py in RealSenseLib - VERIFY this
+        # # flip everything up/down based on camera mounting
+        # color = color[::-1,:,:]
+        # cloud = cloud[::-1,:,:]
+        # if depth_uv is not None:
+        #     depth_uv = depth_uv[::-1,:,:]
+        #
+        # # the point cloud and the depth UV map actually need to have their values changed
+        # # because the Y spatial direction is reversed
+        # cloud[:,:,1] *= -1
+        # if depth_uv is not None:
+        #     depth_uv[:,:,1] = 1 - depth_uv[:,:,1]
+        #
+        # # convert point cloud to meters
+        # cloud /= 1000
+        ###############
+
+        ##############
         # depth_buffer = frame.depth.open(PixelFormat.DEPTH_F32)
         # depth_image = numpy.frombuffer(depth_buffer.data(), dype=numpy.float32).reshape((depth_buffer.height, depth_buffer.width))
         #
