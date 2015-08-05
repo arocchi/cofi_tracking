@@ -26,7 +26,7 @@ def detect_hues(frame, hue_filters):
     frame = cv2.blur(frame, (BLUR_SIZE, BLUR_SIZE))
 
     # convert to hsv and find range of colors
-    hsv = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
+    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
     centers = list()
 

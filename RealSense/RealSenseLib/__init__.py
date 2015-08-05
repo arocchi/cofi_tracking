@@ -1,6 +1,8 @@
 import numpy
-from klampt import so3, se3
-
+try:
+    from klampt import so3, se3
+except:
+    pass
 from client import RemoteRawCamera
 
 def uvtexture(src, uv2):

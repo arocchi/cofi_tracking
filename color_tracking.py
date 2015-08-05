@@ -18,15 +18,17 @@ ok = True
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('img_name', nargs='?', default='', help="a local image file, or a number representing a camera id")
+    parser.add_argument('img_name', nargs='?', default='0', help="a local image file, or a number representing a camera id")
     parser.add_argument("--realsense", help="use the Realsense",action='store_true')
     args = parser.parse_args()
 
     img_mode = False
     opencv_mode = False
+    network_mode = False
     realsense_mode = False
     camera_index = 0
 
+    realsense_streamer = None   # Realsense over the network
     realsense_grabber = None    # RealSense grabber
     cap = None                  # OpenCV grabber
 
@@ -34,15 +36,25 @@ if __name__ == "__main__":
         import RealSense.best_fast_grabber as gr
         realsense_mode = True
         realsense_grabber = gr.best_fast_grabber()
-
-    if args.img_name != '':
+    else:
         try:
             camera_index = int(args.img_name)
             opencv_mode = True
             cap = cv2.VideoCapture(camera_index)
-
         except:
-            img_mode = True
+            if len(args.img_name.split('.')) == 4 or args.img_name == 'localhost':
+                network_mode = True
+                import RealSense.RealSenseLib.client
+                port = None
+                ip = args.img_name.split(':')[0]
+                if len(args.img_name.split(':')) == 2:
+                    port = args.img_name.split(':')[1]
+                if port is not None:
+                    realsense_streamer = RealSense.RealSenseLib.RemoteRawCamera(ip, port)
+                else:
+                    realsense_streamer = RealSense.RealSenseLib.RemoteRawCamera(ip)
+            else:
+                img_mode = True
 
 
     colors = cg.get_hsv_equispaced_hues(NUM_COLORS)
@@ -65,16 +77,21 @@ if __name__ == "__main__":
 
         hue_filters.append((h_min , h_max, h))
 
-    while(ok):
-
-        if(realsense_mode):
+    while ok:
+        if realsense_mode:
             (color_image, cloud, depth_uv, inverse_uv) = realsense_grabber.grab()
             frame = color_image.copy()
-        elif(img_mode):
+        elif img_mode:
             frame = cv2.imread(args.img_name)
-        else:
+        elif network_mode:
+            (color_image, cloud, depth_uv, inverse_uv) = realsense_streamer.read()
+            frame = color_image
+        elif opencv_mode:
             # read the frames
             _,frame = cap.read()
+        else:
+            print 'Error: unknown mode'
+            exit()
 
         start_time = time.clock()
 
