@@ -74,7 +74,7 @@ if __name__ == '__main__':
     try:
         mark = time()
         while True:
-            (color, cloud, _) = camera.read()
+            (color, cloud, _, _) = camera.read()
 
             color_window.update_frame(color)
             depth_window.update_frame(colormap[numpy.clip(cloud[:,:,2], 0, len(colormap) - 1).astype(numpy.int)])
