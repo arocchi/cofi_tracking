@@ -48,12 +48,16 @@ class RemoteCamera:
         cloud = cloud[::-1,:,:]
         if depth_uv is not None:
             depth_uv = depth_uv[::-1,:,:]
+        if inverse_uv is not None:
+            inverse_uv = inverse_uv[::-1,:,:]
 
         # the point cloud and the depth UV map actually need to have their values changed
         # because the Y spatial direction is reversed
         cloud[:,:,1] *= -1
         if depth_uv is not None:
             depth_uv[:,:,1] = 1 - depth_uv[:,:,1]
+        if inverse_uv is not None:
+            inverse_uv[:,:,1] = 1 - inverse_uv[:,:,1]
 
         # convert point cloud to meters
         cloud /= 1000
