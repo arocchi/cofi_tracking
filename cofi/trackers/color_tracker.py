@@ -94,8 +94,8 @@ def detect_hs(frame, hs_filters):
         s_min, s_max = hs_filter['S']
 
         if h_min > h_max:
-            thresh_l = cv2.inRange(hsv,np.array((h_min, s_min, V_MIN)),     np.array((360.0/2,  s_max, V_MAX)))
-            thresh_u = cv2.inRange(hsv,np.array((0.0,   s_min, V_MIN)),     np.array((h_max,    s_max, V_MAX)))
+            thresh_l = cv2.inRange(hsv,np.array((h_min, s_min, V_MIN)),     np.array((180,  s_max, V_MAX)))
+            thresh_u = cv2.inRange(hsv,np.array((0,     s_min, V_MIN)),     np.array((h_max,s_max, V_MAX)))
             thresh = cv2.add(thresh_l, thresh_u)
         else:
             thresh = cv2.inRange(hsv,np.array((h_min,   s_min, V_MIN)),     np.array((h_max,    s_max, V_MAX)))
@@ -133,6 +133,6 @@ def detect_hues(frame, hue_filters):
     hs_filters = [{'H':hue_filter,'S':(S_MIN,S_MAX)} for hue_filter in hue_filters]
     hs_centers = detect_hs(frame, hs_filters)
     h_centers = [ center[0:3] for center in hs_centers]
-    
+
     return h_centers
 

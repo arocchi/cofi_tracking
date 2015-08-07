@@ -63,28 +63,31 @@ if __name__ == "__main__":
     hue_filters = list()
     hs_filters = list()
 
-    if os.path.isfile('markers_v0.json'):
-        print "Loading marker information from markers_v0.json"
-        hs_filters = ct.load_hs_filters('markers_v0.json', COLOR_MARGIN_HS)
-    else:
-        print "Computing markers information from ideal hue distribution"
-        colors = cg.get_hsv_equispaced_hues(NUM_COLORS)
+    if os.path.isfile('markers_v1.json'):
+        print "Loading marker information from markers_v1.json"
+        hs_filters = ct.load_hs_filters('markers_v1.json', COLOR_MARGIN_HS)
+        print hs_filters
+    #else:
+    print "Computing markers information from ideal hue distribution"
+    colors = cg.get_hsv_equispaced_hues(NUM_COLORS)
 
-        for color in colors:
-            h,_,_ = color
-            threshold = COLOR_MARGIN*(360.0/NUM_COLORS)
+    for color in colors:
+        h,_,_ = color
+        threshold = COLOR_MARGIN*(360.0/NUM_COLORS)
 
-            h_min = 2*h - threshold/2
-            if h_min < 0:
-                h_min += 360
-            h_min /= 2
+        h_min = 2*h - threshold/2
+        if h_min < 0:
+            h_min += 360
+        h_min /= 2
 
-            h_max = 2*h + threshold/2
-            if h_max > 360:
-                h_max -= 360
-            h_max /= 2
+        h_max = 2*h + threshold/2
+        if h_max > 360:
+            h_max -= 360
+        h_max /= 2
 
-            hue_filters.append((h_min , h_max, h))
+        hue_filters.append((int(round(h_min)), int(round(h_max)), int(round(h))))
+
+    print hue_filters
 
     while ok:
         if realsense_mode:
@@ -104,10 +107,10 @@ if __name__ == "__main__":
 
         start_time = time.clock()
 
-        if len(hue_filters) > 0:
-            centers = ct.detect_hues(frame, hue_filters)
-        else:
+        if len(hs_filters) > 0:
             centers = ct.detect_hs(frame, hs_filters)
+        else:
+            centers = ct.detect_hues(frame, hue_filters)
 
         for center in centers:
             cx, cy, h = center
