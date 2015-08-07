@@ -8,10 +8,12 @@ import numpy as np
 import cofi.generators.color_generator as cg
 import cofi.trackers.color_tracker as ct
 import argparse
+import os.path
 
 
 # can go from 0 (hard colors) to 1 (soft colors)
 COLOR_MARGIN = 0.52
+COLOR_MARGIN_HS = 0.75
 
 NUM_COLORS = 12
 ok = True
@@ -57,25 +59,32 @@ if __name__ == "__main__":
                 img_mode = True
 
 
-    colors = cg.get_hsv_equispaced_hues(NUM_COLORS)
 
     hue_filters = list()
+    hs_filters = list()
 
-    for color in colors:
-        h,_,_ = color
-        threshold = COLOR_MARGIN*(360.0/NUM_COLORS)
+    if os.path.isfile('markers_v0.json'):
+        print "Loading marker information from markers_v0.json"
+        hs_filters = ct.load_hs_filters('markers_v0.json', COLOR_MARGIN_HS)
+    else:
+        print "Computing markers information from ideal hue distribution"
+        colors = cg.get_hsv_equispaced_hues(NUM_COLORS)
 
-        h_min = 2*h - threshold/2
-        if h_min < 0:
-            h_min += 360
-        h_min /= 2
+        for color in colors:
+            h,_,_ = color
+            threshold = COLOR_MARGIN*(360.0/NUM_COLORS)
 
-        h_max = 2*h + threshold/2
-        if h_max > 360:
-            h_max -= 360
-        h_max /= 2
+            h_min = 2*h - threshold/2
+            if h_min < 0:
+                h_min += 360
+            h_min /= 2
 
-        hue_filters.append((h_min , h_max, h))
+            h_max = 2*h + threshold/2
+            if h_max > 360:
+                h_max -= 360
+            h_max /= 2
+
+            hue_filters.append((h_min , h_max, h))
 
     while ok:
         if realsense_mode:
@@ -95,7 +104,11 @@ if __name__ == "__main__":
 
         start_time = time.clock()
 
-        centers = ct.detect_hues(frame, hue_filters)
+        if len(hue_filters) > 0:
+            centers = ct.detect_hues(frame, hue_filters)
+        else:
+            centers = ct.detect_hs(frame, hs_filters)
+
         for center in centers:
             cx, cy, h = center
             bgr = cv2.cvtColor(np.array([[[h,255,255]]],np.uint8),cv2.COLOR_HSV2BGR)

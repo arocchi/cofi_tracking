@@ -25,5 +25,5 @@ def get_hsv_equispaced_hues(num_colors = 12):
         colors.append([hue_cv2,255,255])
     return colors
 
-if __name__ == "main":
+if __name__ == "__main__":
     pass
