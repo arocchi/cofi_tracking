@@ -16,6 +16,8 @@ BLUR_SIZE = 3
 
 MIN_AREA = 9
 
+SHOW_DEBUG_IMG = True
+
 def load_hs_filters(filename, hue_scaling=1.0):
     """
     Loads a .json file structured in the following way (for n+1 color tracking):
@@ -80,6 +82,7 @@ def detect_hs(frame, hs_filters):
 
     centers = list()
 
+    thresh2 = None
     for hs_filter in hs_filters:
         if len(hs_filter['H']) == 3:
             h_min, h_max, h = hs_filter['H']
@@ -99,8 +102,11 @@ def detect_hs(frame, hs_filters):
             thresh = cv2.add(thresh_l, thresh_u)
         else:
             thresh = cv2.inRange(hsv,np.array((h_min,   s_min, V_MIN)),     np.array((h_max,    s_max, V_MAX)))
-        thresh2 = thresh.copy()
-        #cv2.imshow('thresh'+str(h),thresh2)
+
+        if thresh2 is None:
+            thresh2 = thresh.copy()
+        else:
+            thresh2 = cv2.add(thresh2, thresh)
 
         # find contours in the threshold image
         contours,hierarchy = cv2.findContours(thresh,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
@@ -111,6 +117,7 @@ def detect_hs(frame, hs_filters):
 
         for cnt in contours:
             area = cv2.contourArea(cnt)
+            # @TODO add density check
             if area > MIN_AREA and area > max_area:
                 max_area = area
                 best_cnt = cnt
@@ -119,6 +126,9 @@ def detect_hs(frame, hs_filters):
             M = cv2.moments(best_cnt)
             cx, cy = int(M['m10']/M['m00']), int(M['m01']/M['m00'])
             centers.append((cx, cy, h))
+
+    if SHOW_DEBUG_IMG:
+        cv2.imshow('thresholds',thresh2)
 
     return centers
 
