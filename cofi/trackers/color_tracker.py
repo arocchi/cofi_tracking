@@ -132,8 +132,6 @@ def detect_hs(frame, hs_filters):
                 mask = np.zeros(frame.shape[0:2], np.uint8)
                 cv2.drawContours(mask,[best_cnt],0,255,-1)
                 mask_px = np.transpose(np.nonzero(mask))
-                #import IPython.core.debugger as pdb
-                #pdb.Tracer()()
                 thresh2[mask_px[:, 0], mask_px[:, 1]] = (255,255,255)
                 cv2.drawContours(thresh2,[best_cnt],0,(0,255,0),1)
 

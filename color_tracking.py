@@ -7,6 +7,7 @@ import time
 import numpy as np
 import cofi.generators.color_generator as cg
 import cofi.trackers.color_tracker as ct
+import cofi.visualization.point_cloud as pcl_vis
 import argparse
 import os.path
 
@@ -103,7 +104,7 @@ if __name__ == "__main__":
             frame = cv2.imread(args.img_name)
         elif network_mode:
             (color_image, cloud, depth_uv, inverse_uv) = realsense_streamer.read()
-            frame = color_image
+            frame = color_image.copy()
         elif opencv_mode:
             # read the frames
             _,frame = cap.read()
@@ -120,7 +121,9 @@ if __name__ == "__main__":
 
         if cloud is not None:
             from RealSense.RealSenseLib import uvtexture
-            texture = uvtexture(frame,depth_uv)
+            texture = uvtexture( frame,depth_uv )
+
+        points_rgb = np.zeros((0, 4), dtype=np.float32)
 
         for idx, center in enumerate(centers):
             cx, cy, h, contour = center
@@ -134,7 +137,7 @@ if __name__ == "__main__":
                 cv2.drawContours(mask,[contour],0,255,-1)
                 mask_px = np.transpose(np.nonzero(mask))
 
-                cloud_mask = depth_uv[mask_px[:, 0], mask_px[:, 1], :]
+                cloud_mask = inverse_uv[mask_px[:, 0], mask_px[:, 1], :]
                 valid_mask = (cloud_mask[:,0] >= 0) & (cloud_mask[:,1] >= 0) & (cloud_mask[:,0] <= 1) & (cloud_mask[:,1] <= 1)
                 cloud_mask = cloud_mask[valid_mask]
 
@@ -142,8 +145,27 @@ if __name__ == "__main__":
                     points = cloud[np.clip(cloud_mask[:, 0]*cloud.shape[0], 0, cloud.shape[0]-1).round().astype(np.int),
                                    np.clip(cloud_mask[:, 1]*cloud.shape[1], 0, cloud.shape[1]-1).round().astype(np.int)]
 
+                    rgb_values = np.array([pcl_vis.rgb_to_pcl_float(
+                        frame[mask_px[i, 0], mask_px[i, 1], 0],
+                        frame[mask_px[i, 0], mask_px[i, 1], 1],
+                        frame[mask_px[i, 0], mask_px[i, 1], 2]) for i in xrange(points.shape[0])]
+                                          , dtype=np.float32).reshape(points.shape[0], 1)
+
+                    points_rgb = np.append(points_rgb, np.append(points, rgb_values, 1), 0)
+
+
+
         # Show it, if key pressed is 'Esc', exit the loop
         cv2.imshow('frame', frame)
+
+        #import IPython.core.debugger as pdb
+
+        #import matplotlib.pyplot as plt
+        #pcl_vis.render_3d_scatter_with_rgb(points_rgb)
+        #plt.show()
+
+        #pdb.Tracer()()
+
 
         end_time = time.clock()
         print "elapsed time", end_time - start_time
