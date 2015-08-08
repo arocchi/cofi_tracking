@@ -10,6 +10,12 @@ import cofi.trackers.color_tracker as ct
 import argparse
 import os.path
 
+try:
+    import pcl
+    has_pcl = True
+except ImportError:
+    has_pcl = False
+
 
 # can go from 0 (hard colors) to 1 (soft colors)
 COLOR_MARGIN = 0.52
@@ -112,20 +118,37 @@ if __name__ == "__main__":
         else:
             centers = ct.detect_hues(frame, hue_filters)
 
-        for center in centers:
-            cx, cy, h = center
+        if cloud is not None:
+            from RealSense.RealSenseLib import uvtexture
+            texture = uvtexture(frame,depth_uv)
+
+        for idx, center in enumerate(centers):
+            cx, cy, h, contour = center
             bgr = cv2.cvtColor(np.array([[[h,255,255]]],np.uint8),cv2.COLOR_HSV2BGR)
             bgr = tuple(bgr.tolist()[0][0])
             cv2.circle(frame, (cx, cy), 7, (0, 0, 0), 2)
             cv2.circle(frame, (cx, cy), 7,  bgr,     -1)
 
+            if cloud is not None:
+                mask = np.zeros(frame.shape[0:2], np.uint8)
+                cv2.drawContours(mask,[contour],0,255,-1)
+                mask_px = np.transpose(np.nonzero(mask))
+
+                cloud_mask = depth_uv[mask_px[:, 0], mask_px[:, 1], :]
+                valid_mask = (cloud_mask[:,0] >= 0) & (cloud_mask[:,1] >= 0) & (cloud_mask[:,0] <= 1) & (cloud_mask[:,1] <= 1)
+                cloud_mask = cloud_mask[valid_mask]
+
+                if cloud_mask.shape[0] > 0:
+                    points = cloud[np.clip(cloud_mask[:, 0]*cloud.shape[0], 0, cloud.shape[0]-1).round().astype(np.int),
+                                   np.clip(cloud_mask[:, 1]*cloud.shape[1], 0, cloud.shape[1]-1).round().astype(np.int)]
+
         # Show it, if key pressed is 'Esc', exit the loop
-        cv2.imshow('frame',frame)
+        cv2.imshow('frame', frame)
 
         end_time = time.clock()
         print "elapsed time", end_time - start_time
 
-        if cv2.waitKey(33)== 27:
+        if cv2.waitKey(33) == 27:
             break
 
         if img_mode and (cv2.waitKey() & 0xff) == ord('q'):

@@ -15,6 +15,7 @@ V_MAX = 255
 BLUR_SIZE = 3
 
 MIN_AREA = 9
+MAX_AREA = 150
 
 SHOW_DEBUG_IMG = True
 
@@ -103,10 +104,8 @@ def detect_hs(frame, hs_filters):
         else:
             thresh = cv2.inRange(hsv,np.array((h_min,   s_min, V_MIN)),     np.array((h_max,    s_max, V_MAX)))
 
-        if thresh2 is None:
-            thresh2 = thresh.copy()
-        else:
-            thresh2 = cv2.add(thresh2, thresh)
+        if thresh2 is None and SHOW_DEBUG_IMG:
+            thresh2 = np.zeros((thresh.shape[0],thresh.shape[1],3))
 
         # find contours in the threshold image
         contours,hierarchy = cv2.findContours(thresh,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
@@ -115,17 +114,29 @@ def detect_hs(frame, hs_filters):
         max_area = 0
         best_cnt = None
 
-        for cnt in contours:
+        for idx, cnt in enumerate(contours):
             area = cv2.contourArea(cnt)
             # @TODO add density check
-            if area > MIN_AREA and area > max_area:
+            if area > MIN_AREA and area < MAX_AREA and area > max_area:
+                if SHOW_DEBUG_IMG: # drawing contours for candidate areas
+                    cv2.drawContours(thresh2,contours,idx,(255,0,0),1)
                 max_area = area
                 best_cnt = cnt
         if best_cnt is not None:
             # finding centroids of best_cnt and draw a circle there
             M = cv2.moments(best_cnt)
             cx, cy = int(M['m10']/M['m00']), int(M['m01']/M['m00'])
-            centers.append((cx, cy, h))
+            centers.append((cx, cy, h, best_cnt))
+
+            if SHOW_DEBUG_IMG: # drawing areas and contours for blobs
+                mask = np.zeros(frame.shape[0:2], np.uint8)
+                cv2.drawContours(mask,[best_cnt],0,255,-1)
+                mask_px = np.transpose(np.nonzero(mask))
+                #import IPython.core.debugger as pdb
+                #pdb.Tracer()()
+                thresh2[mask_px[:, 0], mask_px[:, 1]] = (255,255,255)
+                cv2.drawContours(thresh2,[best_cnt],0,(0,255,0),1)
+
 
     if SHOW_DEBUG_IMG:
         cv2.imshow('thresholds',thresh2)
@@ -142,7 +153,7 @@ def detect_hues(frame, hue_filters):
     """
     hs_filters = [{'H':hue_filter,'S':(S_MIN,S_MAX)} for hue_filter in hue_filters]
     hs_centers = detect_hs(frame, hs_filters)
-    h_centers = [ center[0:3] for center in hs_centers]
+    #h_centers = [ center[0:4] for center in hs_centers]
 
-    return h_centers
+    return hs_centers
 
