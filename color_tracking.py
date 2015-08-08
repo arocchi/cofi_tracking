@@ -3,6 +3,7 @@
 __author__ = 'Alessio Rocchi'
 
 import cv2
+import matplotlib.pyplot as plt
 import time
 import numpy as np
 import cofi.generators.color_generator as cg
@@ -124,13 +125,14 @@ if __name__ == "__main__":
             texture = uvtexture( frame,depth_uv )
 
         points_rgb = np.zeros((0, 4), dtype=np.float32)
+        centroids_xyz = np.zeros((0, 3), dtype=np.float32)
 
         for idx, center in enumerate(centers):
             cx, cy, h, contour = center
             bgr = cv2.cvtColor(np.array([[[h,255,255]]],np.uint8),cv2.COLOR_HSV2BGR)
             bgr = tuple(bgr.tolist()[0][0])
-            cv2.circle(frame, (cx, cy), 7, (0, 0, 0), 2)
             cv2.circle(frame, (cx, cy), 7,  bgr,     -1)
+            cv2.circle(frame, (cx, cy), 7, (150, 150, 150), 2)
 
             if cloud is not None:
                 mask = np.zeros(frame.shape[0:2], np.uint8)
@@ -150,28 +152,29 @@ if __name__ == "__main__":
                         frame[mask_px[i, 0], mask_px[i, 1], 1],
                         frame[mask_px[i, 0], mask_px[i, 1], 2]) for i in xrange(points.shape[0])]
                                           , dtype=np.float32).reshape(points.shape[0], 1)
+                    #import IPython.core.debugger as pdb
+                    #pdb.Tracer()()
 
-                    points_rgb = np.append(points_rgb, np.append(points, rgb_values, 1), 0)
+                    centroid = (points.sum(0)/points.shape[0])
 
+                    if centroid[2] > 0:
+                        centroids_xyz = np.append(centroids_xyz, centroid.reshape(1,3), 0)
+                        points_rgb = np.append(points_rgb, np.append(points, rgb_values, 1), 0)
+                        cv2.circle(frame, (cx, cy), 7, (0, 0, 0), 2)
 
 
         # Show it, if key pressed is 'Esc', exit the loop
         cv2.imshow('frame', frame)
-
-        #import IPython.core.debugger as pdb
-
-        #import matplotlib.pyplot as plt
-        #pcl_vis.render_3d_scatter_with_rgb(points_rgb)
-        #plt.show()
-
-        #pdb.Tracer()()
-
 
         end_time = time.clock()
         print "elapsed time", end_time - start_time
 
         if cv2.waitKey(33) == 27:
             break
+
+        #pcl_vis.render_3d_scatter_with_rgb(points_rgb)
+        #plt.show()
+        print "centroids:", centroids_xyz
 
         if img_mode and (cv2.waitKey() & 0xff) == ord('q'):
             ok = False
