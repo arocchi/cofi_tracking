@@ -28,7 +28,7 @@ ok = True
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('img_name', nargs='?', default='0', help="a local image file, or a number representing a camera id")
+    parser.add_argument('img_name', nargs='?', default='0', help="a local image file, a number representing a camera id, or an ip address")
     parser.add_argument("--realsense", help="use the Realsense",action='store_true')
     args = parser.parse_args()
 
@@ -116,24 +116,27 @@ if __name__ == "__main__":
         start_time = time.clock()
 
         if len(hs_filters) > 0:
-            centers = ct.detect_hs(frame, hs_filters)
+            blobs = ct.detect_hs(frame, hs_filters)
         else:
-            centers = ct.detect_hues(frame, hue_filters)
+            blobs = ct.detect_hues(frame, hue_filters)
 
         if cloud is not None:
             from RealSense.RealSenseLib import uvtexture
             texture = uvtexture( frame,depth_uv )
 
         points_rgb = np.zeros((0, 4), dtype=np.float32)
+
+        # the return value of this algorithm is a list of centroids for the detected blobs
         centroids_xyz = np.zeros((0, 3), dtype=np.float32)
 
-        for idx, center in enumerate(centers):
-            cx, cy, h, contour = center
+        for idx, blob in enumerate(blobs):
+            cx, cy, h, contour = blob
             bgr = cv2.cvtColor(np.array([[[h,255,255]]],np.uint8),cv2.COLOR_HSV2BGR)
             bgr = tuple(bgr.tolist()[0][0])
             cv2.circle(frame, (cx, cy), 7,  bgr,     -1)
             cv2.circle(frame, (cx, cy), 7, (150, 150, 150), 2)
 
+            # we get all the cloud points whose inverse_uv lies in the blob area as defined by the contour
             if cloud is not None:
                 mask = np.zeros(frame.shape[0:2], np.uint8)
                 cv2.drawContours(mask,[contour],0,255,-1)

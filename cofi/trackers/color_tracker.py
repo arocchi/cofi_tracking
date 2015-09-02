@@ -72,7 +72,7 @@ def detect_hs(frame, hs_filters):
     Performs constant box thresholding in HSV color space based on a list of hue and saturation thresholds
     :param frame: the input frame
     :param hs_filters: a list of dicts {'H':(hue_min,hue_max),'S':(saturation_min,saturation_max)}
-    :return: a list of tuples (blob_center_x,blob_center_y,nominal_detected_hue, nominal_detected_saturation)
+    :return: a list of tuples (blob_center_x,blob_center_y,nominal_detected_hue, blob_contour)
     """
 
     # smooth frame
